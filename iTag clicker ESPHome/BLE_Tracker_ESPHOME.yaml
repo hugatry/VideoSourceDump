@@ -1,0 +1,71 @@
+#Insert below code after the existing lines (board-, file-, name-, ota- and other settings)
+
+esp32_ble_tracker:
+  
+ble_client:
+  - mac_address: FF:FF:FF:FF:FF:FF #REPLACE WITH FOB'S MAC ADDRESS
+    id: fob1
+    on_connect:
+      then:
+      - delay: 2s #Wait 2s after fob is connected, to make sure connection is 100% live
+      - ble_client.ble_write: #Write 0x00 to characteristic FFE2 in service FFE0 to disable beebing when connection is lost
+          id: fob1
+          service_uuid: FFE0
+          characteristic_uuid: FFE2
+          # List of bytes to write.
+          value: [0x00]
+
+
+sensor:
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: fob1
+    id: fob1_ble_btn
+    service_uuid: 'FFE0'
+    characteristic_uuid: 'FFE1'
+    icon: "mdi:button" 
+    notify: true
+    update_interval: never
+    on_notify:
+      then:
+        - binary_sensor.template.publish:
+            id: fob1_btn
+            state: ON
+        - delay: 20ms
+        - binary_sensor.template.publish:
+            id: fob1_btn
+            state: OFF
+
+
+binary_sensor:
+  - platform: template
+    id: fob_switch
+    name: Fob Switch
+  - platform: template
+    id: fob1_btn
+    on_multi_click:
+    - timing:
+        - ON for at most 0.2s
+        - OFF for at least 1s
+      then: #Single click action
+        - binary_sensor.template.publish:
+            id: fob_switch
+            state: OFF
+    - timing:
+        - ON for at most 0.2s
+        - OFF for at most 1s
+        - ON for at most 0.2s
+        - OFF for at most 1s
+        - ON for at most 0.2s
+        - OFF for at least 0.5s
+      then: #Double click action
+        - binary_sensor.template.publish:
+            id: fob_switch
+            state: ON
+
+
+
+output:
+  - platform: gpio
+    id: led
+    pin: 2

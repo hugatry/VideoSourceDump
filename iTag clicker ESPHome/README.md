@@ -1,0 +1,2 @@
+# Connect iTag to Home Assistant using ESP32 & ESPHome
+This is yaml file created for detecting single and double clicks on cheap iTag (clone) keyfobs. This file only includes lines that were written for this task, default board configuration etc. lines were deleted before sharing... Copy paste this code after the default lines.
