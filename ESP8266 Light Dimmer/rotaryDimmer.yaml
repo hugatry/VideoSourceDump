@@ -1,0 +1,84 @@
+
+sensor:
+    #Rotary encoder handling
+  - platform: rotary_encoder
+    id: myrotary_encoder
+    name: "Rotary Encoder"
+    min_value: 0
+    max_value: 100
+    resolution: 2
+    #Filters to limit rate of updates to once per 0.1s, or when value has changed by 10. 
+    #Each rotary encoder step is still counted, but "on_value" automation will trigger at limited rate.
+    filters:
+      - or:
+        - debounce: 0.1s
+        - delta: 10
+    # PINOUT, I selected D6 and D5 for no special reason, almost any pin that can have pull-up will work.
+    pin_a: 
+      number: D6
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    pin_b: 
+      number: D5
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    #When rotary encoder's value changes
+    on_value:
+      then:
+        #If light's current brightness scaled from original 0-255 range to 0-100 range is not equal to rotary encoder's value,
+        #make Home Assistant service call to change the brightness
+        - if:
+            condition:
+                lambda: 'return ((int)((id(bright).state/2.55)+0.5) != x);'
+            then:
+              - homeassistant.service:
+                  service: light.turn_on
+                  data:
+                    entity_id: light.wiz_bedroom #REPLACE WITH YOUR LIGHT'S ENTITY ID
+                    brightness_pct: !lambda 'return x;'
+            else:
+              logger.log: "No need to update light"
+
+    #Sensor for getting brightness from Home Assistant
+  - platform: homeassistant
+    id: bright
+    entity_id: light.wiz_bedroom #REPLACE WITH YOUR LIGHT'S ENTITY ID
+    attribute: brightness
+    #When light's brightness value has changed (updated by Home Assistant)
+    on_value:
+      then:
+        #If light's new brightness value is within specific range and it's not equal to rotary encoder's value,
+        #update rotary encoder's value to match the brightness
+        - if:
+            condition:
+                lambda: 'return (x<=255 && x >= 0 && (int)((x/2.55)+0.5) != (int)id(myrotary_encoder).state);'
+            then:
+              - sensor.rotary_encoder.set_value:
+                  id: myrotary_encoder
+                  value: !lambda 'return (int)((x/2.55)+0.5);'
+            else:
+              logger.log: "No need to update rotary encoder"
+
+#Rotary encoder's tact switch used to toggle the light ON/OFF. Switch connected between ground and D1, internal pull-up enabled.
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: D1
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    id: button
+#Little bit of debouncing
+    filters:
+      - delayed_off: 10ms
+    #Click will trigger Home Assistant service call that toggles the light ON/OFF
+    on_click: 
+      - homeassistant.service:
+          service: light.toggle
+          data:
+            entity_id: light.wiz_bedroom #REPLACE WITH YOUR LIGHT'S ENTITY ID
