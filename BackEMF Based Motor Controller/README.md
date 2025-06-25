@@ -1,0 +1,3 @@
+# Back-EMF based constant speed motor controller
+This is Arduino sketch shown in my ["Back-Emf based constant speed motor controller" YouTube video](https://youtu.be/9omyQCjx76Y).
+This is only for reference for those who want to play along at home. This will not be developed further, any bugs or mistakes that are in the sketch will stay there. Published as a support material for the YouTube video linked above.
