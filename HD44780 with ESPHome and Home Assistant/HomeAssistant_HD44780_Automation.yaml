@@ -1,0 +1,26 @@
+alias: LCD
+description: >-
+  When brightness of light with entity id light.wiz_bedroom changes, show
+  brightness percentage in input_text.lcd2 -Helper and name in input_text.lcd1 -Helper
+triggers:
+  - trigger: state
+    entity_id:
+      - light.wiz_bedroom
+    attribute: brightness
+conditions: []
+actions:
+  - action: input_text.set_value
+    metadata: {}
+    data:
+      value: >-
+        Brightness: {{ ((state_attr('light.wiz_bedroom', 'brightness') | float)
+        * 100 / 255) | round(0) }}%
+    target:
+      entity_id: input_text.lcd2
+  - action: input_text.set_value
+    metadata: {}
+    data:
+      value: "{{ state_attr('light.wiz_bedroom', 'friendly_name')}}"
+    target:
+      entity_id: input_text.lcd1
+mode: single

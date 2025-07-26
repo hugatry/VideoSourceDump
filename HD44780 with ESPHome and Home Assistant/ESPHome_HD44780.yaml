@@ -1,0 +1,25 @@
+#Below is the ESPHome configuration used in this demo project. 
+#I have omitted esphome, esp8266, logger, api, ota, wifi and captive_portal sections, which were
+# automatically created and are device specific. Below code was appended to the base configuration.
+i2c:
+  sda: D2
+  scl: D1
+  scan: true
+
+#Create text sensors which are linked to text-type Helpers on Home Assistant
+text_sensor:
+  - platform: homeassistant
+    id: line1
+    entity_id: input_text.lcd1
+  - platform: homeassistant
+    id: line2
+    entity_id: input_text.lcd2
+#Setup HD44780 display with PCF8574 I2C addon, print values of text sensors (above) when they update
+display:
+  - platform: lcd_pcf8574
+    id: lcd_display
+    dimensions: 16x2
+    address: 0x27
+    lambda: |-
+      it.print(0, 0, id(line1).state);
+      it.print(0, 1, id(line2).state);
